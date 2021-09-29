@@ -1,0 +1,104 @@
+'---十進数のRevision_noがを二進数に変換------------
+Sub DecToBin(ByRef revison_no)
+	Dim revno_Dec As String    '10進数revison_no
+	Dim revno_Bin As String    '2進数revison_no
+'---繰り返しループ用-------------------------------
+	Dim reminder As Integer    '余り
+	Dim quotient As Integer    '商
+
+	revno_Dec = Val(revions_no)   '文字列を数値型に変換
+	revno_Bin = ""                '2進数rev_noを初期化
+
+  '---2進変換の処理完了までループ--------------------
+  Do
+		reminder = revno_Dec mod 2    '10進数値を2で割った余りを取得
+		quotient = Int(revno_Dec / 2) '商を取得。10進数値を2で割った結果を整数で返す
+		
+		'余りを文字列に変換し、文字列の左に追加していく
+		revno_Bin = Cstr(reminder) & revno_Bin
+
+		If (quotient < 2) Then      '10進数値が2未満ならループ終了 
+			If (quotient = 1) Then    '商が1の場合、2進数rev_noの最上位桁に1追加
+				revno_Bin = Cstr(reminder) & revno_Bin
+			End If
+			Exit Do
+		End If
+	Loop
+End Sub
+
+'---二進数のRevision_noをエクセルに書きこむ------------
+Sub Write_to_Excel(ByRef revno_Bin)
+
+'---二進数値が16bit未満の時、0を不足分頭に追加（不要？）---------
+	if len(revno_Bin)<16 Then
+		lack = 16 - len(revno_Bin)
+			for i = 1 To lack
+				revno_Bin = "0" & revno_Bin
+			Next
+	End If
+
+	'---Excelの各セルに書きこみ-------------------------
+	Range("A17").Value = Int(Mid(revno_Bin, 16)   '1bit目
+	Range("A16").Value = Int(Mid(revno_Bin, 16)   '2bit目
+	Range("A15").Value = Int(Mid(revno_Bin, 16)   '3bit目
+	Range("A14").Value = Int(Mid(revno_Bin, 16)   '4bit目
+	Range("A13").Value = Int(Mid(revno_Bin, 16)   '5bit目
+	Range("A12").Value = Int(Mid(revno_Bin, 16)   '6bit目
+	Range("A11").Value = Int(Mid(revno_Bin, 16)   '7bit目
+	Range("A10").Value = Int(Mid(revno_Bin, 16)   '8bit目
+	Range("A9").Value = Int(Mid(revno_Bin, 16)    '9bit目
+	Range("A8").Value = Int(Mid(revno_Bin, 16)    '10bit目
+	Range("A7").Value = Int(Mid(revno_Bin, 16)    '11bit目
+	Range("A6").Value = Int(Mid(revno_Bin, 16)    '12bit目
+	Range("A5").Value = Int(Mid(revno_Bin, 16)    '13bit目
+	Range("A4").Value = Int(Mid(revno_Bin, 16)    '14bit目
+	Range("A3").Value = Int(Mid(revno_Bin, 16)    '15bit目
+	Range("A2").Value = Int(Mid(revno_Bin, 16)    '16bit目
+End Sub
+
+
+'---各16進のパラメータをテキストファイルに書きこむ------------
+Sub Write_to_text(ByVal new_hex_file_path)
+	Dim Fso As FileSystemObject    'FileSystemObjectオブジェクト
+	Dim new_parameter_file As TextStream      'TextStreamオブジェクト
+	Dim new_file_path As String
+	Dim posi3 As Integer
+	Dim posi_hex_h As Range
+	Dim posi_hex_l As Range
+	Dim next_value As String
+
+'---ファイル名取得---------------------------------------------
+	posi3 = InStrRev(new_hex_file_path,".")    '.h16までの位置
+	new_file_path = Mid(new_hex_file_path, posi3) & "txt"    'テキストファイルの名前取得
+
+'---テキストファイル作成-----------------------------------------------
+	Set Fso = New FileSystemObject
+	Set new_parameter_file = Fso.creattextfile(new_file_path, False)    'True:上書き
+
+'---テキストファイルへ書き込み-------------------------------------------------
+	new_parameter_file.WriteLine (ADD(H),HEX(H))
+	
+'---エクセルのHEX(H),HEX(L)のセルの位置を取得。(全文一致）----この処理必要？
+	set posi_hex_h = ThisWorkbook.Worksheets(1).Range("A1:AZ3")_
+            .Find(What:="HEX(H)", LookAt:=xlWhole)
+	set posi_hex_l = ThisWorkbook.Worksheets(1).Range("A1:AZ3")_
+            .Find(What:="HEX(L)", LookAt:=xlWhole)
+
+	'set posi_hex_h = ThisWorkbook.Worksheets(1).Cell.Find("HEX(H)")
+	'set posi_hex_l = ThisWorkbook.Worksheets(1).Cell.Find("HEX(L)")
+
+	'now_value = Cell(posi_hex_h).Value
+	Range(posi_hex_h).Select  'HEX(H)の位置を選択
+	ActiveCell.Offset(1, 0).Activate    'セル選択位置を一つ下に移動させる
+	next_value = ActiveCell.Value
+
+	Do Until next_value = ""　　　　'次のセルが空白になるまで繰り返す
+		new_parameter_file.Write(ActiveCell.Value & ",") 'HEX(H)を書きこむ
+		ActiveCell.Offset(0, 1).Activate    'セル選択位置を一つ右に移動させる
+		new_parameter_file.WriteLine(ActiveCell.Value) 'HEX(L)を書きこむ、改行
+		ActiveCell.Offset(1, -1).Activate    '次のアドレスのパラメータのセルを選択
+    nex_value = ActiveCell.Value
+	Loop
+
+	new_parameter_file.Close    'テキストファイルを閉じる
+End Sub
